@@ -22,7 +22,7 @@ class SAVocab(object):
 
         self._tag2id = reverse(self._id2tag)
         if len(self._tag2id) != len(self._id2tag):
-            print("serious bug: POS tags dumplicated, please check!")
+            print("serious bug: tags dumplicated, please check!")
 
         print("Vocab info: #words %d, #tags %d" % (self.vocab_size, self.tag_size))
 
@@ -210,6 +210,7 @@ class Vocab(object):
         if embeddings is not None:
             embeddings[self.UNK] = embeddings[self.UNK] / word_num
             embeddings = embeddings / np.std(embeddings)
+
         return embeddings
 
     def word2id(self, xs):

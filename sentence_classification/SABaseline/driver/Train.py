@@ -24,7 +24,7 @@ def train(data, dev_data, test_data, classifier, vocab, config):
 
         correct_num, total_num = 0, 0
         for onebatch in data_iter(data, config.train_batch_size, True):
-            words, extwords, tags, lengths, masks = \
+            words, extwords, tags, masks = \
                 batch_data_variable(onebatch, vocab)
 
             classifier.model.train()
@@ -73,7 +73,7 @@ def evaluate(data, classifier, vocab, outputFile):
     tag_correct, tag_total = 0, 0
 
     for onebatch in data_iter(data, config.test_batch_size, False):
-        words, extwords, tags, lengths, masks = \
+        words, extwords, tags, masks = \
             batch_data_variable(onebatch, vocab)
         count = 0
         pred_tags = classifier.classifier(words, extwords, masks)
@@ -150,7 +150,6 @@ if __name__ == '__main__':
         print("GPU ID: ", args.gpu)
 
     model = BiLSTMModel(vocab, config, vec)
-    model = model.cpu()
     if config.use_cuda:
         #torch.backends.cudnn.enabled = True
         model = model.cuda()

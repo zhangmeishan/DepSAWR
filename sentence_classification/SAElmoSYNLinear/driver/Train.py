@@ -1,5 +1,5 @@
 import sys
-sys.path.extend(["../../","../","./"])
+sys.path.extend(["../", "./"])
 import time
 import torch.optim.lr_scheduler
 import random
@@ -10,6 +10,7 @@ from driver.SAHelper import *
 from allennlp.commands.elmo import ElmoEmbedder
 from data.Dataloader import *
 import pickle
+
 
 def train(data, dev_data, test_data, classifier, vocab, config):
     optimizer = Optimizer(filter(lambda p: p.requires_grad, classifier.model.parameters()), config)
@@ -24,7 +25,7 @@ def train(data, dev_data, test_data, classifier, vocab, config):
 
         correct_num, total_num = 0, 0
         for onebatch in data_iter(data, config.train_batch_size, True):
-            words, actions, tags, lengths, word_indexes, masks = \
+            words, actions, tags, word_indexes, masks = \
                 batch_data_variable(onebatch, vocab)
 
             classifier.model.train()
@@ -32,7 +33,7 @@ def train(data, dev_data, test_data, classifier, vocab, config):
             classifier.forward(words, actions, word_indexes, masks)
             loss = classifier.compute_loss(tags)
             loss = loss / config.update_every
-            loss_value = loss.data.cpu().numpy()
+            loss_value = loss.item()
             loss.backward()
 
             cur_correct, cur_count = classifier.compute_accuracy(tags)
@@ -41,14 +42,14 @@ def train(data, dev_data, test_data, classifier, vocab, config):
             acc = correct_num * 100.0 / total_num
             during_time = float(time.time() - start_time)
             print("Step:%d, ACC:%.2f, Iter:%d, batch:%d, time:%.2f, loss:%.2f" \
-                %(global_step, acc, iter, batch_iter, during_time, loss_value))
+                  % (global_step, acc, iter, batch_iter, during_time, loss_value))
 
             batch_iter += 1
             if batch_iter % config.update_every == 0 or batch_iter == batch_num:
                 nn.utils.clip_grad_norm_(filter(lambda p: p.requires_grad, classifier.model.parameters()), \
-                                        max_norm=config.clip)
+                                         max_norm=config.clip)
                 optimizer.step()
-                classifier.model.zero_grad()       
+                classifier.model.zero_grad()
                 global_step += 1
 
             if batch_iter % config.validate_every == 0 or batch_iter == batch_num:
@@ -60,7 +61,7 @@ def train(data, dev_data, test_data, classifier, vocab, config):
                     evaluate(test_data, classifier, vocab, config.test_file + '.' + str(global_step))
                 print("Test: acc = %d/%d = %.2f" % (tag_correct, tag_total, test_tag_acc))
                 if dev_tag_acc > best_acc:
-                    print("Exceed best acc: history = %.2f, current = %.2f" %(best_acc, dev_tag_acc))
+                    print("Exceed best acc: history = %.2f, current = %.2f" % (best_acc, dev_tag_acc))
                     best_acc = dev_tag_acc
                     if config.save_after > 0 and iter > config.save_after:
                         torch.save(classifier.model.state_dict(), config.save_model_path)
@@ -73,7 +74,7 @@ def evaluate(data, classifier, vocab, outputFile):
     tag_correct, tag_total = 0, 0
 
     for onebatch in data_iter(data, config.test_batch_size, False):
-        words, actions, tags, lengths, word_indexes, masks = \
+        words, actions, tags, word_indexes, masks = \
             batch_data_variable(onebatch, vocab)
         count = 0
         pred_tags = classifier.classifier(words, actions, word_indexes, masks)
@@ -86,7 +87,6 @@ def evaluate(data, classifier, vocab, outputFile):
     output.close()
 
     acc = tag_correct * 100.0 / tag_total
-
 
     end = time.time()
     during_time = float(end - start)
@@ -158,7 +158,7 @@ if __name__ == '__main__':
     model = BiLSTMModel(vocab, config, (elmo_layers, elmo_dims))
 
     if config.use_cuda:
-        #torch.backends.cudnn.enabled = True
+        # torch.backends.cudnn.enabled = True
         model = model.cuda()
 
     classifier = SentenceClassifier(model, elmo, vocab)

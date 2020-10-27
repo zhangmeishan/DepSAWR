@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
+
 
 def drop_tri_input_independent(word_embeddings, tag_embeddings, context_embeddings, dropout_emb):
     batch_size, seq_length, _ = word_embeddings.size()
@@ -63,11 +63,6 @@ def drop_sequence_sharedmask(inputs, dropout, batch_first=True):
     return inputs.transpose(1, 0)
 
 def default_init(tensor):
-
-    if isinstance(tensor, Variable):
-        default_init(tensor.data)
-        return tensor
-
     if tensor.ndimension() == 1:
         nn.init.constant(tensor, val=0.0)
     else:
@@ -76,21 +71,11 @@ def default_init(tensor):
     return tensor
 
 def embedding_init(tensor, val=0.1):
-
-    if isinstance(tensor, Variable):
-        embedding_init(tensor.data)
-        return tensor
-
     nn.init.uniform(tensor, -val, val)
 
     return tensor
 
 def rnn_init(tensor):
-
-    if isinstance(tensor, Variable):
-        rnn_init(tensor.data)
-        return tensor
-
     if tensor.ndimension() != 2:
 
         return default_init(tensor)

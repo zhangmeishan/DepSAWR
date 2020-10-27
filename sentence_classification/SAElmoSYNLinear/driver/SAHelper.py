@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from torch.autograd import Variable
+
 
 class SentenceClassifier(object):
     def __init__(self, model, elmo, vocab):
@@ -12,7 +12,7 @@ class SentenceClassifier(object):
         self.device = p.get_device() if self.use_cuda else None
 
     def get_elmo(self, in_words):
-         return self.elmo.batch_to_embeddings(in_words)
+        return self.elmo.batch_to_embeddings(in_words)
 
     def forward(self, words, actions, word_indexes, masks):
         word_elmos, _ = self.get_elmo(words)
@@ -20,9 +20,7 @@ class SentenceClassifier(object):
         batch_size, max_length, elmo_dims, elmo_layers = \
             word_elmos.size()
         mixed_max_length = actions.size(1)
-        elmos = Variable(word_elmos.data.new(batch_size, \
-                         mixed_max_length, elmo_dims, elmo_layers).zero_(), \
-                         requires_grad=False)
+        elmos = word_elmos.data.new(batch_size, mixed_max_length, elmo_dims, elmo_layers).zero_()
 
         for b in range(batch_size):
             for idx, index in enumerate(word_indexes[b]):
@@ -37,7 +35,6 @@ class SentenceClassifier(object):
         self.tag_logits = tag_logits
 
     def compute_loss(self, true_tags):
-        true_tags = Variable(true_tags, requires_grad=False)
         if self.use_cuda: true_tags = true_tags.cuda()
         loss = F.cross_entropy(self.tag_logits, true_tags)
 

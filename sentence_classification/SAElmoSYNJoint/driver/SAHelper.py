@@ -1,9 +1,9 @@
-import torch.nn.functional as F
-from torch.autograd import Variable
 import torch
+import torch.nn.functional as F
+
 
 class SentenceClassifier(object):
-    def __init__(self, config, model, elmo, vocab, parser, dep_vocab):
+    def __init__(self, model, elmo, vocab, parser, dep_vocab):
         self.model = model
         self.elmo = elmo
         self.vocab = vocab
@@ -12,13 +12,12 @@ class SentenceClassifier(object):
         self.device = p.get_device() if self.use_cuda else None
         self.parser = parser
         self.dep_vocab = dep_vocab
-        self.config = config
 
     def get_elmo(self, in_words):
          return self.elmo.batch_to_embeddings(in_words)
 
     def parse_one_batch(self, dep_words, dep_extwords, dep_masks, bTrain):
-        if bTrain and self.config.parser_tune == 1:
+        if bTrain and self.model.config.parser_tune == 1:
             self.parser.train()
         else:
             self.parser.eval()
@@ -46,7 +45,6 @@ class SentenceClassifier(object):
         self.tag_logits = tag_logits
 
     def compute_loss(self, true_tags):
-        true_tags = Variable(true_tags, requires_grad=False)
         if self.use_cuda: true_tags = true_tags.cuda()
         loss = F.cross_entropy(self.tag_logits, true_tags)
 
@@ -54,7 +52,7 @@ class SentenceClassifier(object):
 
     def compute_accuracy(self, true_tags):
         b, l = self.tag_logits.size()
-        pred_tags = self.tag_logits.data.max(1)[1].cpu()
+        pred_tags = self.tag_logits.detach().max(1)[1].cpu()
         tag_correct = pred_tags.eq(true_tags).cpu().sum()
 
         return tag_correct, b
@@ -63,6 +61,5 @@ class SentenceClassifier(object):
         if words is not None:
             self.forward(words, masks, dep_words, dep_extwords, dep_masks)
 
-        pred_tags = self.tag_logits.data.max(1)[1].cpu()
-
+        pred_tags = self.tag_logits.detach().max(1)[1].cpu()
         return pred_tags

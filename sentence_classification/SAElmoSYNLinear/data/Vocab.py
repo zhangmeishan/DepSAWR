@@ -1,8 +1,10 @@
 import numpy as np
 
+
 class SAVocab(object):
     PAD, START, END, UNK = 0, 1, 2, 3
-    def __init__(self, word_counter, tag_counter, min_occur_count = 2):
+
+    def __init__(self, word_counter, tag_counter, min_occur_count=2):
         self._id2word = ['<pad>', '<bos>', '<eos>', '<unk>']
         self._wordid2freq = [10000, 10000, 10000, 10000]
         self._id2tag = []
@@ -21,10 +23,9 @@ class SAVocab(object):
 
         self._tag2id = reverse(self._id2tag)
         if len(self._tag2id) != len(self._id2tag):
-            print("serious bug: POS tags dumplicated, please check!")
+            print("serious bug: tags dumplicated, please check!")
 
         print("Vocab info: #words %d, #tags %d" % (self.vocab_size, self.tag_size))
-
 
     def load_pretrained_embs(self, embfile):
         embedding_dim = -1
@@ -72,10 +73,9 @@ class SAVocab(object):
         return embeddings
 
     def word2id(self, xs):
-        ## unknown by pad, since we only embed actions
         if isinstance(xs, list):
-            return [self._word2id.get(x, self.PAD) for x in xs]
-        return self._word2id.get(xs, self.PAD)
+            return [self._word2id.get(x, self.UNK) for x in xs]
+        return self._word2id.get(xs, self.UNK)
 
     def id2word(self, xs):
         if isinstance(xs, list):

@@ -110,7 +110,6 @@ class Configurable(object):
     def dropout_lstm_hidden(self):
         return self._config.getfloat('Network', 'dropout_lstm_hidden')
 
-
     @property
     def learning_rate(self):
         return self._config.getfloat('Optimizer', 'learning_rate')

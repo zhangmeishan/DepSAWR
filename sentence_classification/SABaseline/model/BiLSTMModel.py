@@ -7,7 +7,7 @@ from data.Vocab import *
 def drop_input_independent(word_embeddings, dropout_emb):
     batch_size, seq_length, _ = word_embeddings.size()
     word_masks = word_embeddings.data.new(batch_size, seq_length).fill_(1 - dropout_emb)
-    word_masks = Variable(torch.bernoulli(word_masks), requires_grad=False)
+    word_masks = torch.bernoulli(word_masks)
     scale = 1.0 / (1.0 * word_masks + 1e-12)
     word_masks *= scale
     word_masks = word_masks.unsqueeze(dim=2)
@@ -21,7 +21,7 @@ def drop_sequence_sharedmask(inputs, dropout, batch_first=True):
         inputs = inputs.transpose(0, 1)
     seq_length, batch_size, hidden_size = inputs.size()
     drop_masks = inputs.data.new(batch_size, hidden_size).fill_(1 - dropout)
-    drop_masks = Variable(torch.bernoulli(drop_masks), requires_grad=False)
+    drop_masks = torch.bernoulli(drop_masks)
     drop_masks = drop_masks / (1 - dropout)
     drop_masks = torch.unsqueeze(drop_masks, dim=2).expand(-1, -1, seq_length).permute(2, 0, 1)
     inputs = inputs * drop_masks
@@ -72,7 +72,7 @@ class BiLSTMModel(nn.Module):
         hiddens = hiddens.transpose(1, 0)
 
         mask_values = (masks.unsqueeze(-1).expand(hiddens.size()) - 1) * float('1e6')
-        hiddens = hiddens  + mask_values
+        hiddens = hiddens + mask_values
         hiddens = hiddens.permute(0, 2, 1)
 
         hidden = F.max_pool1d(hiddens, hiddens.size(2)).squeeze(2)

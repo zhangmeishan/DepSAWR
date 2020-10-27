@@ -2,6 +2,7 @@ from module.MyLSTM import *
 from module.Utils import *
 import torch.nn.functional as F
 
+
 class BiLSTMModel(nn.Module):
     def __init__(self, vocab, config, elmo_shape):
         super(BiLSTMModel, self).__init__()
@@ -28,8 +29,7 @@ class BiLSTMModel(nn.Module):
             dropout_out=config.dropout_lstm_hidden,
         )
 
-        self.proj = nn.Linear(2*config.lstm_hiddens, vocab.tag_size, bias=False)
-
+        self.proj = nn.Linear(2 * config.lstm_hiddens, vocab.tag_size, bias=False)
 
     def forward(self, elmos, actions, masks):
         # x = (batch size, sequence length, dimension of embedding)
@@ -46,7 +46,7 @@ class BiLSTMModel(nn.Module):
         hiddens = hiddens.transpose(1, 0)
 
         mask_values = (masks.unsqueeze(-1).expand(hiddens.size()) - 1) * float('1e6')
-        hiddens = hiddens  + mask_values
+        hiddens = hiddens + mask_values
         hiddens = hiddens.permute(0, 2, 1)
 
         hidden = F.max_pool1d(hiddens, hiddens.size(2)).squeeze(2)

@@ -1,5 +1,5 @@
 import torch.nn.functional as F
-from torch.autograd import Variable
+
 
 class SentenceClassifier(object):
     def __init__(self, model, vocab):
@@ -11,7 +11,7 @@ class SentenceClassifier(object):
 
     def forward(self, words, extwords, masks):
         if self.use_cuda:
-            words, extwords = words.cuda(self.device), extwords.cuda(self.device),
+            words, extwords = words.cuda(self.device), extwords.cuda(self.device)
             masks = masks.cuda(self.device)
 
         tag_logits = self.model.forward(words, extwords, masks)
@@ -19,7 +19,6 @@ class SentenceClassifier(object):
         self.tag_logits = tag_logits
 
     def compute_loss(self, true_tags):
-        true_tags = Variable(true_tags, requires_grad=False)
         if self.use_cuda: true_tags = true_tags.cuda()
         loss = F.cross_entropy(self.tag_logits, true_tags)
 

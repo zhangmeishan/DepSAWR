@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 import numpy as np
 
 
@@ -86,11 +85,11 @@ class Biaffine(nn.Module):
         batch_size, len2, dim2 = input2.size()
         if self.bias[0]:
             ones = input1.data.new(batch_size, len1, 1).zero_().fill_(1)
-            input1 = torch.cat((input1, Variable(ones)), dim=2)
+            input1 = torch.cat((input1, ones), dim=2)
             dim1 += 1
         if self.bias[1]:
             ones = input2.data.new(batch_size, len2, 1).zero_().fill_(1)
-            input2 = torch.cat((input2, Variable(ones)), dim=2)
+            input2 = torch.cat((input2, ones), dim=2)
             dim2 += 1
 
         affine = self.linear(input1)
@@ -226,7 +225,7 @@ class MyLSTM(nn.Module):
         masks = masks.expand(-1, -1, self.hidden_size)
 
         if initial is None:
-            initial = Variable(input.data.new(batch_size, self.hidden_size).zero_())
+            initial = input.data.new(batch_size, self.hidden_size).zero_()
             initial = (initial, initial)
         h_n = []
         c_n = []
@@ -237,13 +236,13 @@ class MyLSTM(nn.Module):
             input_mask, hidden_mask = None, None
             if self.training:
                 input_mask = input.data.new(batch_size, input_size).fill_(1 - self.dropout_in)
-                input_mask = Variable(torch.bernoulli(input_mask), requires_grad=False)
+                input_mask = torch.bernoulli(input_mask)
                 input_mask = input_mask / (1 - self.dropout_in)
                 input_mask = torch.unsqueeze(input_mask, dim=2).expand(-1, -1, max_time).permute(2, 0, 1)
                 input = input * input_mask
 
                 hidden_mask = input.data.new(batch_size, self.hidden_size).fill_(1 - self.dropout_out)
-                hidden_mask = Variable(torch.bernoulli(hidden_mask), requires_grad=False)
+                hidden_mask = torch.bernoulli(hidden_mask)
                 hidden_mask = hidden_mask / (1 - self.dropout_out)
 
             layer_output, (layer_h_n, layer_c_n) = MyLSTM._forward_rnn(cell=self.fcells[layer], \

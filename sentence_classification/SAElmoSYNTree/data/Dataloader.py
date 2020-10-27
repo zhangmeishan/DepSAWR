@@ -3,7 +3,6 @@ from data.Vocab import *
 from data.SA import *
 import numpy as np
 import torch
-from torch.autograd import Variable
 
 def read_corpus(file_path):
     data = []
@@ -79,9 +78,9 @@ def batch_data_variable(batch, vocab):
     for b in range(1, batch_size):
         if len(batch[b].forms) > length: length = len(batch[b].forms)
 
-    rels = Variable(torch.LongTensor(batch_size, length).zero_(), requires_grad=False)
-    masks = Variable(torch.Tensor(batch_size, length).zero_(), requires_grad=False)
-    tags = torch.LongTensor(batch_size).zero_()
+    rels = torch.zeros([batch_size, length], dtype=torch.int64, requires_grad=False)
+    masks = torch.zeros([batch_size, length], dtype=torch.float, requires_grad=False)
+    tags = torch.zeros([batch_size], dtype=torch.int64, requires_grad=False)
     words = []
     lengths = []
     heads = []

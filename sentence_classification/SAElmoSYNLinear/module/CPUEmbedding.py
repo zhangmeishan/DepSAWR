@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 
+
 class CPUEmbedding(nn.Module):
     def __init__(self, num_embeddings, embedding_dim, padding_idx=None):
         super(CPUEmbedding, self).__init__()
@@ -25,7 +26,7 @@ class CPUEmbedding(nn.Module):
 
     def _apply(self, fn):
         str_func = str(fn)
-        #print(str_func)
+        # print(str_func)
         if 'cuda.<locals>.<lambda>' in str_func:
             print('Always in cpu: function disabled')
             return self

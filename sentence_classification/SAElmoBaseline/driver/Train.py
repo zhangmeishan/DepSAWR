@@ -1,5 +1,5 @@
 import sys
-sys.path.extend(["../../","../","./"])
+sys.path.extend(["../", "./"])
 import time
 import torch.optim.lr_scheduler
 import random
@@ -17,14 +17,15 @@ def train(data, dev_data, test_data, classifier, vocab, config):
     global_step = 0
     best_acc = 0
     batch_num = int(np.ceil(len(data) / float(config.train_batch_size)))
+    update_freq = config.validate_every * config.update_every
     for iter in range(config.train_iters):
         start_time = time.time()
         print('Iteration: ' + str(iter) + ', total batch num: ' + str(batch_num))
         batch_iter = 0
 
-        correct_num, total_num = 0, 0
+        correct_num, total_num, loss_value = 0, 0, 0
         for onebatch in data_iter(data, config.train_batch_size, True):
-            words, tags, lengths, masks = \
+            words, tags, masks = \
                 batch_data_variable(onebatch, vocab)
 
             classifier.model.train()
@@ -32,16 +33,13 @@ def train(data, dev_data, test_data, classifier, vocab, config):
             classifier.forward(words, masks)
             loss = classifier.compute_loss(tags)
             loss = loss / config.update_every
-            loss_value = loss.data.cpu().numpy()
+            loss_value += loss.item()
             loss.backward()
 
             cur_correct, cur_count = classifier.compute_accuracy(tags)
             correct_num += cur_correct
             total_num += cur_count
             acc = correct_num * 100.0 / total_num
-            during_time = float(time.time() - start_time)
-            print("Step:%d, ACC:%.2f, Iter:%d, batch:%d, time:%.2f, loss:%.2f" \
-                %(global_step, acc, iter, batch_iter, during_time, loss_value))
 
             batch_iter += 1
             if batch_iter % config.update_every == 0 or batch_iter == batch_num:
@@ -49,9 +47,14 @@ def train(data, dev_data, test_data, classifier, vocab, config):
                                         max_norm=config.clip)
                 optimizer.step()
                 classifier.model.zero_grad()       
+                during_time = float(time.time() - start_time)
+                print("Step:%d, ACC:%.2f, Iter:%d, batch:%d, time:%.2f, loss:%.2f" \
+                      % (global_step, acc, iter, batch_iter-1, during_time, loss_value))
+
+                loss_value = 0
                 global_step += 1
 
-            if batch_iter % config.validate_every == 0 or batch_iter == batch_num:
+            if batch_iter % update_freq == 0 or batch_iter == batch_num:
                 tag_correct, tag_total, dev_tag_acc = \
                     evaluate(dev_data, classifier, vocab, config.dev_file + '.' + str(global_step))
                 print("Dev: acc = %d/%d = %.2f" % (tag_correct, tag_total, dev_tag_acc))
@@ -73,7 +76,7 @@ def evaluate(data, classifier, vocab, outputFile):
     tag_correct, tag_total = 0, 0
 
     for onebatch in data_iter(data, config.test_batch_size, False):
-        words, tags, lengths, masks = \
+        words, tags, masks = \
             batch_data_variable(onebatch, vocab)
         count = 0
         pred_tags = classifier.classifier(words, masks)
@@ -120,13 +123,14 @@ class Optimizer:
 
 
 if __name__ == '__main__':
-    torch.manual_seed(666)
-    torch.cuda.manual_seed(666)
-    random.seed(666)
-    np.random.seed(666)
+    torch.manual_seed(888)
+    torch.cuda.manual_seed(888)
+    random.seed(888)
+    np.random.seed(888)
 
-    ### gpu
+    # gpu
     gpu = torch.cuda.is_available()
+    print(torch.__version__)
     print("GPU available: ", gpu)
     print("CuDNN: \n", torch.backends.cudnn.enabled)
 
@@ -158,7 +162,7 @@ if __name__ == '__main__':
     model = BiLSTMModel(vocab, config, (elmo_layers, elmo_dims))
 
     if config.use_cuda:
-        #torch.backends.cudnn.enabled = True
+        # torch.backends.cudnn.enabled = True
         model = model.cuda()
 
     classifier = SentenceClassifier(model, elmo, vocab)

@@ -3,7 +3,6 @@ from data.Vocab import *
 from data.SA import *
 import numpy as np
 import torch
-from torch.autograd import Variable
 
 def read_corpus(file_path):
     data = []
@@ -23,7 +22,7 @@ def creatVocab(corpusFile, min_occur_count):
     tag_counter = Counter()
     alldatas = read_corpus(corpusFile)
     for inst in alldatas:
-        for curword in inst.words:
+        for curword in inst.forms:
             word_counter[curword] += 1
         tag_counter[inst.tag] += 1
 
@@ -35,7 +34,7 @@ def insts_numberize(insts, vocab):
 
 def inst2id(inst, vocab):
     inputs = []
-    for curword in inst.words:
+    for curword in inst.forms:
         wordid = vocab.word2id(curword)
         extwordid = vocab.extword2id(curword)
         inputs.append([wordid, extwordid])
@@ -73,27 +72,24 @@ def batch_data_variable(batch, vocab):
     for b in range(1, batch_size):
         if len(batch[b].words) > length: length = len(batch[b].words)
 
-    words = Variable(torch.LongTensor(batch_size, length).zero_(), requires_grad=False)
-    extwords = Variable(torch.LongTensor(batch_size, length).zero_(), requires_grad=False)
-    masks = Variable(torch.Tensor(batch_size, length).zero_(), requires_grad=False)
-    tags = torch.LongTensor(batch_size).zero_()
-    lengths = []
+    words = torch.zeros([batch_size, length], dtype=torch.int64, requires_grad=False)
+    extwords = torch.zeros([batch_size, length], dtype=torch.int64, requires_grad=False)
+    masks = torch.zeros([batch_size, length], dtype=torch.float, requires_grad=False)
+    tags = torch.zeros([batch_size], dtype=torch.int64, requires_grad=False)
 
     b = 0
     for inputs, tagid in insts_numberize(batch, vocab):
         index = 0
-        length = len(inputs)
-        lengths.append(length)
         tags[b] = tagid
         for curword in inputs:
             words[b, index] = curword[0]
             extwords[b, index] = curword[1]
             masks[b, index] = 1
             index += 1
-        
         b += 1
 
-    return words, extwords, tags, lengths, masks
+    return words, extwords, tags, masks
+
 
 def batch_variable_inst(insts, tagids, vocab):
     for inst, tagid in zip(insts, tagids):
