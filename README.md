@@ -6,4 +6,4 @@ Dependency-Based Syntax-Aware Word Representations
 - [ ] Machine Translation 
     -  [ ] Codes for our NAACL 2019 paper (updates): Syntax-Enhanced Neural Machine Translation with Syntax-Aware Word Representations.   
 
-We will add detailed descriptions as well as related datasets soonly to faciliate future research studies.
+We will add detailed descriptions as well as related datasets soonly to facilitate future research studies.
